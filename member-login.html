@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FitSphere — Gym Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0F1317;
+    --panel:#171C21;
+    --panel-raised:#1D2329;
+    --line:#2A3038;
+    --paper:#EDEFEA;
+    --paper-dim:#9AA3AC;
+    --amber:#E8A33D;
+    --amber-dim:#4A3A1E;
+    --teal:#4C9A8B;
+    --red:#C4604A;
+    --radius-sm:4px;
+    --radius-md:8px;
+    --spring:cubic-bezier(.32,1.56,.64,1);
+    --spring-soft:cubic-bezier(.22,1.12,.36,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{
+    font-family:'Oswald',sans-serif;
+    text-transform:uppercase;
+    letter-spacing:0.02em;
+    font-weight:600;
+    margin:0;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  a{color:inherit;}
+  button{font-family:inherit;cursor:pointer;}
+  ::selection{background:var(--amber);color:var(--ink);}
+
+  /* ---------- App shell ---------- */
+  .app{
+    display:grid;
+    grid-template-columns:232px 1fr;
+    min-height:100vh;
+  }
+  .rail{
+    background:var(--panel);
+    border-right:1px solid var(--line);
+    padding:24px 16px;
+    display:flex;
+    flex-direction:column;
+    gap:28px;
+    position:sticky;
+    top:0;
+    height:100vh;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:0 4px;
+  }
+  .brand-mark{
+    width:34px;height:34px;border-radius:50%;
+    border:2px solid var(--amber);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+    animation:brandPop .5s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  .brand-mark svg{width:16px;height:16px;}
+  .brand-name{font-size:16px;line-height:1.1;}
+  .brand-name span{display:block;font-family:'Inter',sans-serif;text-transform:none;font-size:10px;color:var(--paper-dim);letter-spacing:0.03em;margin-top:2px;font-weight:500;}
+
+  nav.railnav{display:flex;flex-direction:column;gap:2px;flex:1;position:relative;}
+  .nav-indicator{
+    position:absolute;left:0;width:3px;border-radius:2px;background:var(--amber);
+    top:0;height:0;opacity:0;
+    transition:transform .38s var(--spring), height .38s var(--spring), opacity .2s ease;
+    pointer-events:none;
+  }
+  .navbtn{
+    display:flex;align-items:center;gap:12px;
+    background:none;border:none;color:var(--paper-dim);
+    padding:10px 10px;border-radius:var(--radius-sm);
+    font-size:14px;font-weight:500;text-align:left;
+    transition:background .18s ease, color .18s ease, transform .15s var(--spring);
+    position:relative;overflow:hidden;
+  }
+  .navbtn svg{width:17px;height:17px;flex-shrink:0;opacity:.85;transition:transform .25s var(--spring);}
+  .navbtn:hover{background:var(--panel-raised);color:var(--paper);transform:translateX(2px);}
+  .navbtn:hover svg{transform:scale(1.1) rotate(-2deg);}
+  .navbtn.active{background:var(--panel-raised);color:var(--paper);}
+  .navbtn:active{transform:translateX(2px) scale(.97);}
+  .navbtn[disabled]{opacity:.3;cursor:not-allowed;}
+  .navbtn[disabled]:hover{background:none;color:var(--paper-dim);}
+
+  .rail-footer{border-top:1px solid var(--line);padding-top:16px;}
+  .role-switch label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--paper-dim);display:block;margin-bottom:6px;}
+  select#roleSelect{
+    width:100%;background:var(--panel-raised);border:1px solid var(--line);
+    color:var(--paper);padding:8px 10px;border-radius:var(--radius-sm);
+    font-family:'Inter',sans-serif;font-size:13px;font-weight:500;
+  }
+
+  main{padding:32px 40px 64px;max-width:1180px;}
+  .topline{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;gap:24px;flex-wrap:wrap;}
+  .topline h1{font-size:28px;}
+  .topline p.sub{color:var(--paper-dim);font-size:14px;margin-top:6px;max-width:520px;line-height:1.5;}
+  .clock{font-size:13px;color:var(--paper-dim);text-align:right;}
+  .clock .time{font-family:'IBM Plex Mono',monospace;font-size:18px;color:var(--paper);display:block;}
+
+  section.view{display:none;}
+  section.view.active{display:block;animation:viewFade .38s ease both;}
+
+  @keyframes viewFade{
+    from{opacity:0;transform:translateY(8px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  @keyframes cardIn{
+    from{opacity:0;transform:translateY(10px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  #view-dashboard.active .grid.cols-4 > .card{animation:cardIn .45s ease both;}
+  #view-dashboard.active .grid.cols-4 > .card:nth-child(1){animation-delay:.02s;}
+  #view-dashboard.active .grid.cols-4 > .card:nth-child(2){animation-delay:.08s;}
+  #view-dashboard.active .grid.cols-4 > .card:nth-child(3){animation-delay:.14s;}
+  #view-dashboard.active .grid.cols-4 > .card:nth-child(4){animation-delay:.2s;}
+
+  /* ---------- Cards / grid ---------- */
+  .grid{display:grid;gap:16px;}
+  .grid.cols-4{grid-template-columns:repeat(4,1fr);}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr);}
+  .grid.cols-2{grid-template-columns:repeat(2,1fr);}
+  @media (max-width:900px){
+    .grid.cols-4{grid-template-columns:repeat(2,1fr);}
+    .grid.cols-3{grid-template-columns:repeat(2,1fr);}
+    .grid.cols-2{grid-template-columns:1fr;}
+  }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius-md);
+    padding:18px 20px;
+  }
+  .stat .num{font-family:'Oswald',sans-serif;font-size:34px;font-weight:600;}
+  .stat .num.skeleton{
+    color:transparent;display:inline-block;min-width:56px;border-radius:4px;
+    background:linear-gradient(100deg, var(--panel-raised) 30%, var(--line) 50%, var(--panel-raised) 70%);
+    background-size:200% 100%;
+    animation:shimmer 1.3s ease-in-out infinite;
+  }
+  @keyframes shimmer{
+    0%{background-position:180% 0;}
+    100%{background-position:-20% 0;}
+  }
+  .stat .label{color:var(--paper-dim);font-size:12px;margin-top:4px;}
+  .stat .delta{font-size:12px;margin-top:8px;}
+  .delta.up{color:var(--teal);}
+  .delta.down{color:var(--red);}
+
+  .panel-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .panel-title h2{font-size:15px;letter-spacing:.03em;}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;color:var(--paper-dim);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;border-bottom:1px solid var(--line);}
+  td{padding:10px 10px;border-bottom:1px solid var(--line);}
+  tr:last-child td{border-bottom:none;}
+  .pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.02em;}
+  .pill.ok{background:rgba(76,154,139,.15);color:var(--teal);}
+  .pill.warn{background:rgba(232,163,61,.15);color:var(--amber);}
+  .pill.bad{background:rgba(196,96,74,.15);color:var(--red);}
+
+  .btn{
+    background:var(--amber);color:#221605;border:none;
+    padding:9px 16px;border-radius:var(--radius-sm);
+    font-size:13px;font-weight:600;letter-spacing:.01em;
+    transition:filter .15s ease, transform .12s var(--spring), border-color .15s ease;
+    position:relative;overflow:hidden;
+  }
+  .btn:hover{filter:brightness(1.08);}
+  .btn:active{transform:scale(.96);}
+  .btn.ghost{background:none;border:1px solid var(--line);color:var(--paper);}
+  .btn.ghost:hover{border-color:var(--paper-dim);}
+  .btn.small{padding:6px 12px;font-size:12px;}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .btn:disabled:active{transform:none;}
+
+  .ripple{
+    position:absolute;border-radius:50%;
+    background:rgba(255,255,255,.4);
+    transform:scale(0);
+    pointer-events:none;
+    animation:rippleAnim .55s var(--spring-soft) forwards;
+  }
+  @keyframes rippleAnim{
+    to{transform:scale(1);opacity:0;}
+  }
+
+  input,select,textarea{
+    background:var(--panel-raised);border:1px solid var(--line);color:var(--paper);
+    padding:9px 11px;border-radius:var(--radius-sm);font-family:'Inter',sans-serif;font-size:13px;width:100%;
+  }
+  label.field-label{font-size:11px;color:var(--paper-dim);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;}
+  .field{margin-bottom:14px;}
+
+  /* Coach cards */
+  .coach-card{display:flex;flex-direction:column;gap:10px;transition:transform .15s ease-out, border-color .2s ease;animation:cardIn .4s ease both;will-change:transform;}
+  .coach-card:hover{border-color:var(--paper-dim);}
+  .coach-head{display:flex;gap:12px;align-items:center;}
+  .avatar{width:46px;height:46px;border-radius:50%;background:var(--panel-raised);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:16px;color:var(--amber);flex-shrink:0;transition:transform .2s ease;}
+  .coach-card:hover .avatar{transform:scale(1.08);}
+  .coach-name{font-size:15px;font-weight:600;}
+  .coach-spec{font-size:12px;color:var(--paper-dim);}
+  .tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;}
+  .tag{font-size:10.5px;background:var(--panel-raised);border:1px solid var(--line);padding:3px 8px;border-radius:12px;color:var(--paper-dim);}
+  .coach-actions{display:flex;gap:8px;margin-top:4px;}
+
+  #coachGrid .coach-card:nth-child(1){animation-delay:.02s;}
+  #coachGrid .coach-card:nth-child(2){animation-delay:.07s;}
+  #coachGrid .coach-card:nth-child(3){animation-delay:.12s;}
+  #coachGrid .coach-card:nth-child(4){animation-delay:.17s;}
+  #coachGrid .coach-card:nth-child(5){animation-delay:.22s;}
+  #coachGrid .coach-card:nth-child(6){animation-delay:.27s;}
+
+  .choice-toggle{display:flex;border:1px solid var(--line);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:22px;width:fit-content;}
+  .choice-toggle button{background:var(--panel);color:var(--paper-dim);border:none;padding:10px 18px;font-size:13px;font-weight:500;transition:background .2s ease, color .2s ease;}
+  .choice-toggle button.active{background:var(--amber);color:#221605;font-weight:600;}
+
+  .modal-backdrop{position:fixed;inset:0;background:rgba(6,8,10,.7);display:none;align-items:center;justify-content:center;z-index:50;padding:20px;}
+  .modal-backdrop.open{display:flex;animation:backdropFade .2s ease both;}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-md);padding:24px;width:100%;max-width:400px;}
+  .modal-backdrop.open .modal{animation:modalPop .28s cubic-bezier(.2,.9,.3,1.1) both;}
+  .modal h3{font-size:16px;margin-bottom:16px;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px;}
+
+  @keyframes backdropFade{from{opacity:0;}to{opacity:1;}}
+  @keyframes modalPop{from{opacity:0;transform:scale(.93) translateY(8px);}to{opacity:1;transform:scale(1) translateY(0);}}
+
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--panel-raised);border:1px solid var(--amber);color:var(--paper);padding:12px 18px;border-radius:var(--radius-sm);font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:60;max-width:320px;
+    opacity:0;transform:translateY(14px) scale(.96);pointer-events:none;transition:opacity .3s ease, transform .4s var(--spring);}
+  .toast.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}
+
+  .empty{color:var(--paper-dim);font-size:13px;padding:18px 4px;}
+
+  /* Workout builder */
+  .builder-row{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;margin-bottom:22px;}
+  @media (max-width:700px){.builder-row{grid-template-columns:1fr;}}
+  .exercise-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:0 10px;font-size:13px;padding:10px 0;border-bottom:1px solid var(--line);}
+  .exercise-row.head{color:var(--paper-dim);font-size:11px;text-transform:uppercase;letter-spacing:.04em;}
+  .exercise-row:last-child{border-bottom:none;}
+  .exercise-row:not(.head){animation:rowIn .3s ease both;}
+  @keyframes rowIn{from{opacity:0;transform:translateX(-6px);}to{opacity:1;transform:translateX(0);}}
+
+  #suppRecommendGrid .card{animation:cardIn .4s ease both;}
+  #suppRecommendGrid .card:nth-child(1){animation-delay:.02s;}
+  #suppRecommendGrid .card:nth-child(2){animation-delay:.08s;}
+  #suppRecommendGrid .card:nth-child(3){animation-delay:.14s;}
+
+  .plan-card{border:1px solid var(--line);border-radius:var(--radius-md);padding:18px;background:var(--panel);transition:transform .15s ease-out, border-color .2s ease, box-shadow .2s ease;animation:cardIn .4s ease both;will-change:transform;}
+  .plan-card.selected{animation:methodPick .3s ease;}
+  .plan-card .price{font-family:'Oswald',sans-serif;font-size:30px;margin:6px 0 2px;}
+  .plan-card .price small{font-family:'Inter',sans-serif;font-size:12px;color:var(--paper-dim);text-transform:none;}
+  .plan-card ul{list-style:none;padding:0;margin:14px 0;display:flex;flex-direction:column;gap:8px;}
+  .plan-card li{font-size:13px;color:var(--paper-dim);padding-left:16px;position:relative;}
+  .plan-card li::before{content:'—';position:absolute;left:0;color:var(--amber);}
+  .plan-card.selected{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber);}
+
+  .method-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0 22px;}
+  @media (max-width:700px){.method-grid{grid-template-columns:repeat(2,1fr);}}
+  .method{border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px 10px;text-align:center;background:var(--panel-raised);font-size:12.5px;font-weight:500;transition:border-color .18s ease, color .18s ease, transform .15s var(--spring);position:relative;overflow:hidden;}
+  .method.active{border-color:var(--amber);color:var(--amber);animation:methodPick .28s ease;}
+  .method:active{transform:scale(.96);}
+  @keyframes methodPick{0%{transform:scale(.94);}60%{transform:scale(1.03);}100%{transform:scale(1);}}
+
+  .nfc-zone{
+    border:2px dashed var(--line);border-radius:var(--radius-md);
+    padding:40px 20px;text-align:center;margin-bottom:24px;
+    transition:border-color .2s, background .2s;
+  }
+  .nfc-zone.scanning{border-color:var(--amber);background:rgba(232,163,61,.06);}
+  .nfc-ring{width:72px;height:72px;border-radius:50%;border:2px solid var(--line);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;position:relative;}
+  .radar-ring{position:absolute;inset:0;border-radius:50%;border:1.5px solid var(--amber);opacity:0;}
+  .nfc-zone.scanning .radar-ring{animation:radarPulse 1.6s var(--spring-soft) infinite;}
+  @keyframes radarPulse{
+    0%{transform:scale(.9);opacity:.65;}
+    75%{opacity:0;}
+    100%{transform:scale(2.4);opacity:0;}
+  }
+  .nfc-zone.scanning .nfc-ring{border-color:var(--amber);animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(232,163,61,.35);}50%{box-shadow:0 0 0 10px rgba(232,163,61,0);}}
+  .nfc-ring.success{border-color:var(--teal);animation:successPop .4s ease;}
+  @keyframes successPop{0%{transform:scale(.85);}45%{transform:scale(1.12);}100%{transform:scale(1);}}
+  .nfc-zone.success{border-color:var(--teal);background:rgba(76,154,139,.06);}
+
+  @keyframes rowFlash{
+    0%{background:rgba(232,163,61,.28);}
+    100%{background:transparent;}
+  }
+  tr.flash-in{animation:rowFlash 1.1s ease;}
+  tr{transition:background .2s ease;}
+
+  .scroll-reveal{
+    opacity:0;
+    transform:translateY(30px);
+    transition:opacity .6s var(--spring-soft), transform .6s var(--spring-soft);
+  }
+  .scroll-reveal.revealed{
+    opacity:1;
+    transform:translateY(0);
+  }
+  @media (prefers-reduced-motion: reduce){
+    .scroll-reveal{opacity:1;transform:none;transition:none;}
+  }
+
+  footer.credit{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);color:var(--paper-dim);font-size:11.5px;}
+
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-track{background:var(--ink);}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px;}
+
+  @media (max-width:820px){
+    .app{grid-template-columns:1fr;}
+    .rail{position:relative;height:auto;flex-direction:row;align-items:center;overflow-x:auto;padding:14px 16px;}
+    .rail-footer{border-top:none;padding-top:0;margin-left:auto;flex-shrink:0;}
+    nav.railnav{flex-direction:row;flex:none;}
+    .navbtn span{display:none;}
+    main{padding:24px 18px 48px;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important;}
+  }
+
+  button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible{
+    outline:2px solid var(--amber); outline-offset:2px;
+  }
+
+  /* ---------- Member authentication / portal ---------- */
+  .auth-overlay{position:fixed;inset:0;background:rgba(6,8,10,.96);display:flex;align-items:center;justify-content:center;padding:20px;z-index:100;overflow:auto;}
+  .auth-overlay.hidden{display:none;}
+  .auth-card{width:100%;max-width:470px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:28px;box-shadow:0 24px 70px rgba(0,0,0,.55);animation:modalPop .35s ease both;}
+  .auth-brand{text-align:center;margin-bottom:24px;}
+  .auth-brand .brand-mark{margin:0 auto 10px;}
+  .auth-brand h2{font-size:25px;}
+  .auth-brand p{color:var(--paper-dim);font-size:12px;margin:6px 0 0;}
+  .auth-tabs{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:20px;}
+  .auth-tabs button{border:0;background:var(--panel-raised);color:var(--paper-dim);padding:10px;font-weight:600;}
+  .auth-tabs button.active{background:var(--amber);color:#221605;}
+  .auth-form{display:none;}
+  .auth-form.active{display:block;animation:viewFade .25s ease both;}
+  .auth-error{min-height:18px;color:var(--red);font-size:12px;margin:8px 0;}
+  .auth-note{font-size:11px;color:var(--paper-dim);line-height:1.5;margin-top:14px;}
+  .member-portal{display:none;}
+  .member-portal.active{display:block;}
+  .member-hero{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:22px;flex-wrap:wrap;}
+  .member-welcome{font-size:28px;}
+  .member-email{font-size:12px;color:var(--paper-dim);margin-top:5px;}
+  .membership-status{border:1px solid var(--teal);background:rgba(76,154,139,.08);padding:14px 16px;border-radius:8px;min-width:210px;}
+  .membership-status.expired{border-color:var(--red);background:rgba(196,96,74,.08);}
+  .membership-status .status{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--teal);font-weight:700;}
+  .membership-status.expired .status{color:var(--red);}
+  .member-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .member-card-title{font-size:12px;color:var(--paper-dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px;}
+  .member-card-value{font-family:'Oswald',sans-serif;font-size:24px;}
+  .member-nfc{font-family:'IBM Plex Mono',monospace;color:var(--amber);font-size:14px;word-break:break-all;}
+  .member-portal .card{margin-bottom:16px;}
+  .logout-btn{margin-left:8px;}
+  @media(max-width:700px){.member-grid{grid-template-columns:1fr;}.auth-card{padding:22px;}}
+
+</style>
+</head>
+<body>
+
+<!-- ============ MEMBER LOGIN / REGISTER ============ -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#E8A33D" stroke-width="2"><path d="M4 8v8M8 6v12M16 6v12M20 8v8"/></svg></div>
+      <h2>IRON-GYM Member Portal</h2>
+      <p>Login to view your membership, NFC access, and check-in history.</p>
+    </div>
+    <div class="auth-tabs">
+      <button type="button" class="active" data-auth-tab="login">Member Login</button>
+      <button type="button" data-auth-tab="register">Register</button>
+    </div>
+
+    <form class="auth-form active" id="loginForm">
+      <div class="field"><label class="field-label">Email</label><input id="loginEmail" type="email" autocomplete="email" placeholder="you@example.com" required></div>
+      <div class="field"><label class="field-label">Password</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Your password" required></div>
+      <div class="auth-error" id="loginError"></div>
+      <button class="btn" type="submit" style="width:100%;">Login to member account</button>
+      <p class="auth-note">Demo account: <strong>jonas@fitsphere.local</strong> / <strong>123456</strong></p>
+    </form>
+
+    <form class="auth-form" id="registerForm">
+      <div class="field"><label class="field-label">Full name</label><input id="regName" type="text" placeholder="Juan Dela Cruz" required></div>
+      <div class="field"><label class="field-label">Email</label><input id="regEmail" type="email" placeholder="juan@example.com" required></div>
+      <div class="field"><label class="field-label">Password</label><input id="regPassword" type="password" minlength="6" placeholder="At least 6 characters" required></div>
+      <div class="field"><label class="field-label">Membership plan</label><select id="regPlan"><option value="monthly">Monthly — ₱1,500 / month</option><option value="quarterly">Quarterly — ₱4,000 / 3 months</option><option value="annual">Annual — ₱14,000 / year</option></select></div>
+      <div class="field"><label class="field-label">NFC UID (optional for now)</label><input id="regNfc" type="text" placeholder="Example: 04A1B2C3D4"></div>
+      <div class="auth-error" id="registerError"></div>
+      <button class="btn" type="submit" style="width:100%;">Create membership account</button>
+      <p class="auth-note">For your thesis demo, registration confirms the selected plan locally. In the final version, connect this step to Flask + a real database + payment verification.</p>
+    </form>
+  </div>
+</div>
+
+
+
+<!-- ============ MEMBER DASHBOARD ============ -->
+<section class="member-portal" id="memberPortal">
+  <div class="member-hero">
+    <div>
+      <h1 class="member-welcome">Welcome, <span id="memberWelcomeName">Member</span></h1>
+      <div class="member-email" id="memberEmail"></div>
+    </div>
+    <div>
+      <button class="btn ghost logout-btn" id="memberLogout">Logout</button>
+    </div>
+  </div>
+  <div class="member-grid">
+    <div class="card"><div class="member-card-title">Membership</div><div class="member-card-value" id="memberPlan">—</div></div>
+    <div class="card"><div class="member-card-title">Expiry</div><div class="member-card-value" id="memberExpiry">—</div></div>
+    <div class="card"><div class="member-card-title">Access status</div><div class="member-card-value" id="memberStatus">—</div></div>
+  </div>
+  <div class="card">
+    <div class="panel-title"><h2>Your NFC access</h2><span class="pill warn">Use at front desk</span></div>
+    <p class="sub" style="margin-top:0;">Your registered NFC card is checked against your active membership before entry is recorded.</p>
+    <div class="member-nfc" id="memberNfc">Not assigned</div>
+  </div>
+  <div class="card">
+    <div class="panel-title"><h2>Recent check-ins</h2></div>
+    <table><thead><tr><th>Date</th><th>Time</th><th>Method</th><th>Status</th></tr></thead><tbody id="memberCheckinTable"></tbody></table>
+    <p class="empty" id="memberCheckinEmpty">No check-ins yet.</p>
+  </div>
+</section>
+
+<div class="app" id="staffApp" style="display:none;">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="rail">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#E8A33D" stroke-width="2"><path d="M4 8v8M8 6v12M16 6v12M20 8v8"/></svg>
+      </div>
+      <div class="brand-name">FitSphere<span>Gym Management</span></div>
+    </div>
+
+    <nav class="railnav" id="railnav">
+      <div class="nav-indicator" id="navIndicator"></div>
+      <button class="navbtn" data-view="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg><span>Dashboard</span></button>
+      <button class="navbtn" data-view="checkin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 12l2 2 4-4"/></svg><span>NFC check-in</span></button>
+      <button class="navbtn" data-view="coach"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg><span>Coaches</span></button>
+      <button class="navbtn" data-view="workout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12h16M4 12a2 2 0 100-4 2 2 0 000 4zM4 12a2 2 0 110 4 2 2 0 010-4zM20 12a2 2 0 100-4 2 2 0 000 4zM20 12a2 2 0 110 4 2 2 0 010-4z"/></svg><span>Workout plans</span></button>
+      <button class="navbtn" data-view="supplements"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8.5 3h7M9 3v5l-4.5 8a2 2 0 001.8 3h11.4a2 2 0 001.8-3L15 8V3"/></svg><span>Supplements</span></button>
+      <button class="navbtn" data-view="payment"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19"/></svg><span>Payments</span></button>
+      <button class="navbtn" data-view="roles"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg><span>Roles &amp; access</span></button>
+    </nav>
+
+    <div class="rail-footer role-switch">
+      <label for="roleSelect">Signed in as</label>
+      <select id="roleSelect">
+        <option value="member">Member — Jonas Rivera</option>
+        <option value="coach">Coach — Coach Mara</option>
+        <option value="staff">Front desk staff</option>
+      </select>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main>
+    <div class="topline">
+      <div>
+        <h1 id="viewTitle">Dashboard</h1>
+        <p class="sub" id="viewSub">Today's activity across the floor, coaching, and inventory.</p>
+      </div>
+      <div class="clock">
+        <span class="time mono" id="clockTime">--:--</span>
+        <span id="clockDate"></span>
+      </div>
+    </div>
+
+    <!-- ---------------- DASHBOARD ---------------- -->
+    <section class="view active" id="view-dashboard">
+      <div class="grid cols-4" style="margin-bottom:20px;">
+        <div class="card stat">
+          <div class="num skeleton" id="statMembers">0</div>
+          <div class="label">Active members</div>
+          <div class="delta up">▲ 6 this week</div>
+        </div>
+        <div class="card stat">
+          <div class="num skeleton" id="statCheckins">0</div>
+          <div class="label">Checked in today</div>
+          <div class="delta up">via NFC tap</div>
+        </div>
+        <div class="card stat">
+          <div class="num skeleton" id="statCoaches">0</div>
+          <div class="label">Coaches on roster</div>
+          <div class="delta" style="color:var(--paper-dim);">3 available now</div>
+        </div>
+        <div class="card stat">
+          <div class="num skeleton" id="statLowStock">0</div>
+          <div class="label">Supplements low on stock</div>
+          <div class="delta down" id="statLowStockNote"></div>
+        </div>
+      </div>
+
+      <div class="grid cols-2">
+        <div class="card scroll-reveal">
+          <div class="panel-title"><h2>Recent check-ins</h2></div>
+          <table>
+            <thead><tr><th>Member</th><th>Time</th><th>Method</th></tr></thead>
+            <tbody id="dashCheckinTable"></tbody>
+          </table>
+        </div>
+        <div class="card scroll-reveal">
+          <div class="panel-title"><h2>Coach appointments today</h2></div>
+          <table>
+            <thead><tr><th>Coach</th><th>Time</th><th>Member</th></tr></thead>
+            <tbody id="dashApptTable">
+              <tr><td>Coach Mara</td><td>10:00 AM</td><td>Jonas Rivera</td></tr>
+              <tr><td>Coach Diego</td><td>2:30 PM</td><td>Bea Santos</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------------- NFC CHECK-IN ---------------- -->
+    <section class="view" id="view-checkin">
+      <div class="nfc-zone scroll-reveal" id="nfcZone">
+        <div class="nfc-ring">
+          <span class="radar-ring"></span>
+          <span class="radar-ring" style="animation-delay:.4s"></span>
+          <span class="radar-ring" style="animation-delay:.8s"></span>
+          <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#E8A33D" stroke-width="1.8"><path d="M6 12a6 6 0 0112 0M8.5 12a3.5 3.5 0 017 0M12 12v.01"/></svg>
+        </div>
+        <h3 style="font-size:15px;margin-bottom:6px;">Hold your NFC chip near the reader</h3>
+        <p class="sub" style="margin:0 auto 18px;max-width:340px;">Tap a keychain, wristband, or card to log entry and pull up the member's plan for the front desk.</p>
+       <button class="btn ghost" id="nfcStatus">
+    Waiting for NFC card...
+</button>
+      </div>
+
+      <div class="card scroll-reveal">
+        <div class="panel-title"><h2>Today's entry log</h2></div>
+        <table>
+          <thead><tr><th>Member</th><th>Chip ID</th><th>Time</th><th>Plan status</th></tr></thead>
+          <tbody id="checkinLogTable"></tbody>
+        </table>
+        <p class="empty" id="checkinEmpty">No check-ins logged yet — tap the reader above.</p>
+      </div>
+    </section>
+
+    <!-- ---------------- COACHES ---------------- -->
+    <section class="view" id="view-coach">
+      <div class="choice-toggle" id="coachChoiceToggle">
+        <button class="active" data-choice="gym">Choose a gym coach</button>
+        <button data-choice="personal">Bring my own coach</button>
+      </div>
+
+      <div id="coachGymPanel">
+        <div class="grid cols-3" id="coachGrid"></div>
+      </div>
+
+      <div id="coachPersonalPanel" style="display:none;max-width:480px;">
+        <div class="card scroll-reveal">
+          <h3 style="font-size:15px;margin-bottom:4px;">Register a personal coach</h3>
+          <p class="sub" style="margin:0 0 16px;">Personal coaches aren't on-site by default — an appointment is required so the front desk can grant floor access.</p>
+          <div class="field">
+            <label class="field-label">Coach full name</label>
+            <input type="text" id="pcName" placeholder="e.g. Ramon Cruz">
+          </div>
+          <div class="field">
+            <label class="field-label">Visit date &amp; time</label>
+            <input type="datetime-local" id="pcDatetime">
+          </div>
+          <div class="field">
+            <label class="field-label">Note for front desk</label>
+            <textarea id="pcNote" rows="3" placeholder="Session focus, equipment needed, etc."></textarea>
+          </div>
+          <button class="btn" id="btnRequestPersonal">Request appointment</button>
+        </div>
+      </div>
+
+      <div class="modal-backdrop" id="apptModal">
+        <div class="modal">
+          <h3 id="apptModalTitle">Book appointment</h3>
+          <div class="field">
+            <label class="field-label">Date &amp; time</label>
+            <input type="datetime-local" id="apptDatetime">
+          </div>
+          <div class="field">
+            <label class="field-label">What do you want to work on?</label>
+            <textarea id="apptNote" rows="3" placeholder="Goal, injury history, availability..."></textarea>
+          </div>
+          <div class="modal-actions">
+            <button class="btn ghost" id="apptCancel">Cancel</button>
+            <button class="btn" id="apptConfirm">Confirm booking</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------------- WORKOUT PLANS ---------------- -->
+    <section class="view" id="view-workout">
+      <div class="card scroll-reveal" style="margin-bottom:22px;">
+        <div class="panel-title"><h2>Build a recommendation</h2></div>
+        <div class="builder-row">
+          <div class="field" style="margin:0;">
+            <label class="field-label">Goal</label>
+            <select id="goalSelect">
+              <option value="loss">Weight loss</option>
+              <option value="muscle">Muscle gain</option>
+              <option value="endurance">Endurance</option>
+              <option value="mobility">Mobility &amp; recovery</option>
+            </select>
+          </div>
+          <div class="field" style="margin:0;">
+            <label class="field-label">Experience level</label>
+            <select id="levelSelect">
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+            </select>
+          </div>
+          <button class="btn" id="btnGenerate">Generate plan</button>
+        </div>
+
+        <div id="planOutput"></div>
+      </div>
+    </section>
+
+    <!-- ---------------- SUPPLEMENTS ---------------- -->
+    <section class="view" id="view-supplements">
+      <div class="card scroll-reveal" style="margin-bottom:20px;">
+        <div class="panel-title">
+          <h2>Recommended for your goal</h2>
+        </div>
+        <div class="grid cols-3" id="suppRecommendGrid"></div>
+      </div>
+
+      <div class="card scroll-reveal" id="inventoryCard">
+        <div class="panel-title">
+          <h2>Inventory &amp; stock monitoring</h2>
+          <span class="sub" style="margin:0;">Staff &amp; coach access</span>
+        </div>
+        <table>
+          <thead><tr><th>Supplement</th><th>Category</th><th>In stock</th><th>Status</th><th></th></tr></thead>
+          <tbody id="inventoryTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ---------------- PAYMENTS ---------------- -->
+    <section class="view" id="view-payment">
+      <div class="grid cols-3" id="planGrid" style="margin-bottom:26px;"></div>
+
+      <div class="card scroll-reveal">
+        <div class="panel-title"><h2>Payment method</h2></div>
+        <div class="method-grid" id="methodGrid">
+          <div class="method active" data-method="Cash">Cash</div>
+          <div class="method" data-method="Card">Debit / Credit card</div>
+          <div class="method" data-method="GCash">GCash</div>
+          <div class="method" data-method="Bank transfer">Bank transfer</div>
+        </div>
+        <button class="btn" id="btnPayNow">Confirm payment</button>
+        <span class="sub" id="paySummary" style="display:block;margin-top:10px;"></span>
+      </div>
+    </section>
+
+    <!-- ---------------- ROLES ---------------- -->
+    <section class="view" id="view-roles">
+      <div class="card scroll-reveal">
+        <div class="panel-title"><h2>What each role can access</h2></div>
+        <table>
+          <thead><tr><th>Area</th><th>Member</th><th>Coach</th><th>Staff</th></tr></thead>
+          <tbody>
+            <tr><td>NFC check-in</td><td>Own entry only</td><td>Own entry only</td><td>Full log</td></tr>
+            <tr><td>Coach directory</td><td>Book &amp; view</td><td>Manage own profile</td><td>Manage all profiles</td></tr>
+            <tr><td>Workout plans</td><td>Own plan</td><td>Assign to members</td><td>View all</td></tr>
+            <tr><td>Supplement inventory</td><td>View recommendations</td><td>View &amp; suggest</td><td>Add, remove, restock</td></tr>
+            <tr><td>Payments</td><td>Pay own dues</td><td>View own payouts</td><td>Process &amp; refund</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer class="credit">FitSphere Gym Management System — front-end demo. All data on this page is generated locally in your browser and resets on reload.</footer>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- Shared state ---------------- */
+  const state = {
+    role: "member",
+    view: "dashboard",
+    checkins: [],
+    payMethod: "Cash",
+    selectedPlan: "monthly"
+  };
+
+  const members = [
+    {id:"M001", name:"Jonas Rivera", email:"jonas@fitsphere.local", password:"123456", cardUID:"PASTE-ACTUAL-UID-HERE", planId:"monthly", plan:"Monthly", status:"active", startDate:"2026-09-22", expiryDate:"2026-10-22", checkins:[]},
+    {id:"M002", name:"Bea Santos", email:"bea@fitsphere.local", password:"123456", cardUID:"PASTE-ACTUAL-UID-HERE", planId:"annual", plan:"Annual", status:"active", startDate:"2026-09-22", expiryDate:"2027-09-22", checkins:[]},
+    {id:"M003", name:"Carlo Reyes", email:"carlo@fitsphere.local", password:"123456", cardUID:"PASTE-ACTUAL-UID-HERE", planId:"monthly", plan:"Monthly", status:"active", startDate:"2026-09-22", expiryDate:"2026-09-24", checkins:[]},
+    {id:"M004", name:"Ana Dizon", email:"ana@fitsphere.local", password:"123456", cardUID:"PASTE-ACTUAL-UID-HERE", planId:"quarterly", plan:"Quarterly", status:"active", startDate:"2026-09-22", expiryDate:"2026-12-22", checkins:[]}
+  ];
+
+  const coaches = [
+    {name:"Coach Mara", initials:"CM", specialty:"Strength & conditioning", style:"Progressive overload, compound lifts", tags:["Powerlifting","Form correction"], onsite:true},
+    {name:"Coach Diego", initials:"CD", specialty:"HIIT & fat loss", style:"Circuit-based, short rest intervals", tags:["HIIT","Nutrition basics"], onsite:true},
+    {name:"Coach Liza", initials:"CL", specialty:"Mobility & rehab", style:"Low-impact, controlled tempo", tags:["Post-injury","Flexibility"], onsite:true},
+    {name:"Coach Bea", initials:"CB", specialty:"Bodybuilding", style:"Hypertrophy, isolation focus", tags:["Muscle gain","Split routines"], onsite:false},
+    {name:"Coach Ramon", initials:"CR", specialty:"Endurance & conditioning", style:"Tempo runs, interval blocks", tags:["Running","Cardio"], onsite:true},
+    {name:"Coach Iris", initials:"CI", specialty:"Functional training", style:"Movement patterns over machines", tags:["Functional","Core"], onsite:false}
+  ];
+
+  const workoutLibrary = {
+    loss:{
+      beginner:[["Brisk incline walk","3","12 min",""],["Bodyweight squats","3","15",""],["Standing rows (band)","3","12",""],["Bicycle crunches","3","20",""]],
+      intermediate:[["Kettlebell swings","4","15",""],["Jump rope intervals","5","1 min",""],["Goblet squats","4","12","20 kg"],["Mountain climbers","3","30",""]],
+      advanced:[["Burpee to box jump","5","10",""],["Sled push","6","20 m",""],["Battle ropes","5","30 sec",""],["Weighted step-ups","4","12","15 kg"]]
+    },
+    muscle:{
+      beginner:[["Machine chest press","3","10","25 kg"],["Lat pulldown","3","10","30 kg"],["Leg press","3","12","40 kg"],["Dumbbell curls","3","12","8 kg"]],
+      intermediate:[["Barbell bench press","4","8","45 kg"],["Barbell row","4","8","40 kg"],["Romanian deadlift","4","10","50 kg"],["Overhead press","3","10","25 kg"]],
+      advanced:[["Barbell squat","5","5","80 kg"],["Weighted pull-ups","5","6","10 kg"],["Deadlift","5","5","100 kg"],["Incline dumbbell press","4","8","28 kg"]]
+    },
+    endurance:{
+      beginner:[["Steady jog","1","20 min",""],["Stationary bike","1","15 min",""],["Bodyweight lunges","3","12",""],["Plank hold","3","30 sec",""]],
+      intermediate:[["Tempo run","1","25 min",""],["Rowing machine","4","500 m",""],["Box step-ups","3","15",""],["Farmer's carry","3","40 m","16 kg"]],
+      advanced:[["Interval sprints","8","400 m",""],["Hill repeats","6","1 min",""],["Rowing machine","5","500 m",""],["Weighted carries","4","60 m","24 kg"]]
+    },
+    mobility:{
+      beginner:[["Cat-cow stretch","3","10",""],["Hip flexor stretch","2","30 sec",""],["Band shoulder rotations","3","15",""],["Child's pose","2","45 sec",""]],
+      intermediate:[["World's greatest stretch","3","8 / side",""],["Foam roll IT band","2","1 min",""],["Thoracic rotations","3","12",""],["90/90 hip switches","3","10",""]],
+      advanced:[["Loaded carries (light)","3","40 m","10 kg"],["Deep squat hold","3","1 min",""],["Turkish get-up","3","5 / side","8 kg"],["Ankle mobility drill","3","12",""]]
+    }
+  };
+
+  const supplements = [
+    {name:"Whey Protein", category:"Protein", stock:34, low:15, goal:"muscle"},
+    {name:"Creatine Monohydrate", category:"Performance", stock:9, low:10, goal:"muscle"},
+    {name:"BCAA", category:"Recovery", stock:22, low:12, goal:"endurance"},
+    {name:"Fat Burner Complex", category:"Weight loss", stock:5, low:10, goal:"loss"},
+    {name:"Electrolyte Mix", category:"Hydration", stock:41, low:15, goal:"endurance"},
+    {name:"Multivitamin", category:"General health", stock:18, low:10, goal:"mobility"},
+    {name:"Omega-3 Fish Oil", category:"Recovery", stock:7, low:10, goal:"mobility"},
+    {name:"Mass Gainer", category:"Weight gain", stock:12, low:10, goal:"muscle"}
+  ];
+
+  const plans = [
+    {id:"monthly", name:"Monthly", price:"₱1,500", period:"/ month", perks:["Full gym floor access","1 free coach consult","Locker access"]},
+    {id:"quarterly", name:"Quarterly", price:"₱4,000", period:"/ 3 months", perks:["Everything in Monthly","2 free coach sessions","10% off supplements"]},
+    {id:"annual", name:"Annual", price:"₱14,000", period:"/ year", perks:["Everything in Quarterly","Priority coach booking","Free NFC access chip"]}
+  ];
+
+  /* ---------------- Clock ---------------- */
+  function tickClock(){
+    const now = new Date();
+    document.getElementById("clockTime").textContent = now.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+    document.getElementById("clockDate").textContent = now.toLocaleDateString([], {weekday:"short", month:"short", day:"numeric"});
+  }
+  tickClock();
+  setInterval(tickClock, 15000);
+
+  /* ---------------- Toast ---------------- */
+  let toastTimer;
+  function toast(msg){
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>el.classList.remove("show"), 2600);
+  }
+
+  /* ---------------- Count-up animation ---------------- */
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function animateNumber(el, target, duration){
+    if(!el) return;
+    if(reduceMotion){ el.textContent = target; return; }
+    duration = duration || 700;
+    const start = Number(el.textContent) || 0;
+    const startTime = performance.now();
+    function step(now){
+      const p = Math.min(1, (now - startTime) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(start + (target - start) * eased);
+      if(p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* ---------------- Ripple effect ---------------- */
+  document.addEventListener("click", (e)=>{
+    const target = e.target.closest(".btn, .method, .navbtn, .choice-toggle button");
+    if(!target || target.disabled) return;
+    const rect = target.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height) * 1.8;
+    const ripple = document.createElement("span");
+    ripple.className = "ripple";
+    ripple.style.width = ripple.style.height = size + "px";
+    ripple.style.left = (e.clientX - rect.left - size / 2) + "px";
+    ripple.style.top = (e.clientY - rect.top - size / 2) + "px";
+    target.appendChild(ripple);
+    ripple.addEventListener("animationend", () => ripple.remove());
+  });
+
+  /* ---------------- 3D tilt for cards ---------------- */
+  function enableTilt(cards){
+    if(reduceMotion) return;
+    cards.forEach(card=>{
+      card.addEventListener("mousemove", (e)=>{
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left, y = e.clientY - rect.top;
+        const rotateX = ((y - rect.height / 2) / (rect.height / 2)) * -5;
+        const rotateY = ((x - rect.width / 2) / (rect.width / 2)) * 5;
+        card.style.transform = `perspective(700px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+      });
+      card.addEventListener("mouseleave", ()=>{ card.style.transform = ""; });
+    });
+  }
+  /* ---------------- Scroll-triggered reveal ---------------- */
+  function initScrollReveal(){
+    const items = document.querySelectorAll(".scroll-reveal");
+    items.forEach((el, i) => {
+      el.style.transitionDelay = (i % 3) * 90 + "ms";
+    });
+    if(reduceMotion){
+      items.forEach(el => el.classList.add("revealed"));
+      return;
+    }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        entry.target.classList.toggle("revealed", entry.isIntersecting);
+      });
+    }, { threshold: 0.15, rootMargin: "0px 0px -60px 0px" });
+    items.forEach(el => io.observe(el));
+  }
+
+  /* ---------------- Navigation ---------------- */
+  const viewMeta = {
+    dashboard:{title:"Dashboard", sub:"Today's activity across the floor, coaching, and inventory."},
+    checkin:{title:"NFC check-in", sub:"Tap a registered chip to log entry and confirm membership status."},
+    coach:{title:"Coaches", sub:"Choose from the in-house roster, or register a personal coach for a scheduled visit."},
+    workout:{title:"Workout plans", sub:"Generate a recommended routine based on goal and experience level."},
+    supplements:{title:"Supplements", sub:"Goal-based recommendations, plus live inventory monitoring for staff."},
+    payment:{title:"Payments", sub:"Membership plans and accepted payment methods."},
+    roles:{title:"Roles & access", sub:"What members, coaches, and staff can each see and do."}
+  };
+
+  function moveNavIndicator(btn){
+    const indicator = document.getElementById("navIndicator");
+    const nav = document.getElementById("railnav");
+    if(!btn || window.innerWidth <= 820){ indicator.style.opacity = "0"; return; }
+    const navRect = nav.getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+    indicator.style.opacity = "1";
+    indicator.style.transform = `translateY(${btnRect.top - navRect.top}px)`;
+    indicator.style.height = btnRect.height + "px";
+  }
+
+  function setView(view){
+    state.view = view;
+    document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+    document.getElementById("view-"+view).classList.add("active");
+    document.querySelectorAll(".navbtn").forEach(b=>b.classList.toggle("active", b.dataset.view===view));
+    document.getElementById("viewTitle").textContent = viewMeta[view].title;
+    document.getElementById("viewSub").textContent = viewMeta[view].sub;
+    moveNavIndicator(document.querySelector(`.navbtn[data-view="${view}"]`));
+  }
+
+  document.getElementById("railnav").addEventListener("click", (e)=>{
+    const btn = e.target.closest(".navbtn");
+    if(!btn || btn.disabled) return;
+    setView(btn.dataset.view);
+  });
+
+  /* ---------------- Role switching ---------------- */
+  function applyRolePermissions(){
+    const inventoryCard = document.getElementById("inventoryCard");
+    if(state.role === "member"){
+      inventoryCard.style.display = "none";
+    } else {
+      inventoryCard.style.display = "";
+    }
+  }
+  document.getElementById("roleSelect").addEventListener("change", (e)=>{
+    state.role = e.target.value;
+    applyRolePermissions();
+    toast("Switched to " + e.target.options[e.target.selectedIndex].text);
+  });
+
+  /* ---------------- Dashboard ---------------- */
+  function renderDashboardCheckins(){
+    const tbody = document.getElementById("dashCheckinTable");
+    if(state.checkins.length === 0){
+      tbody.innerHTML = '<tr><td colspan="3" class="empty" style="border:none;">No check-ins yet today.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = state.checkins.slice(0,5).map((c,i)=>
+      `<tr class="${i===0 ? 'flash-in' : ''}"><td>${c.name}</td><td>${c.time}</td><td>NFC</td></tr>`
+    ).join("");
+  }
+
+  function renderLowStock(){
+    const lowItems = supplements.filter(s=>s.stock <= s.low);
+    animateNumber(document.getElementById("statLowStock"), lowItems.length, 400);
+    document.getElementById("statLowStockNote").textContent = lowItems.length
+      ? lowItems.map(i=>i.name).slice(0,2).join(", ") + (lowItems.length>2 ? "…" : "")
+      : "All stocked";
+  }
+
+
+  /* ---------------- Member accounts / authentication ---------------- */
+  const MEMBER_KEY = "fitsphere_members_v2";
+  const SESSION_KEY = "fitsphere_member_session";
+
+  function loadMembers(){
+    try{
+      const saved = JSON.parse(localStorage.getItem(MEMBER_KEY));
+      if(Array.isArray(saved) && saved.length) return saved;
+    }catch(e){ console.warn("Could not load saved members", e); }
+    return members;
+  }
+  let memberAccounts = loadMembers();
+  // Keep demo accounts available even after a previous test changed localStorage.
+  members.forEach(base=>{
+    if(!memberAccounts.some(m=>m.email===base.email)) memberAccounts.push(base);
+  });
+
+  function saveMembers(){ localStorage.setItem(MEMBER_KEY, JSON.stringify(memberAccounts)); }
+  saveMembers();
+
+  function planInfo(planId){ return plans.find(p=>p.id===planId) || plans[0]; }
+  function addMonths(date, months){ const d=new Date(date); d.setMonth(d.getMonth()+months); return d; }
+  function calculateExpiry(planId, start){
+    const months = planId === "monthly" ? 1 : planId === "quarterly" ? 3 : 12;
+    return addMonths(start, months).toISOString().slice(0,10);
+  }
+  function formatDate(value){
+    const d=new Date(value+"T00:00:00");
+    return isNaN(d) ? value : d.toLocaleDateString([], {year:"numeric",month:"long",day:"numeric"});
+  }
+  function isMembershipActive(member){
+    if(!member || member.status !== "active") return false;
+    const expiry = new Date(member.expiryDate+"T23:59:59");
+    return !isNaN(expiry) && expiry >= new Date();
+  }
+  function getSessionMember(){
+    const email=localStorage.getItem(SESSION_KEY);
+    return email ? memberAccounts.find(m=>m.email===email) : null;
+  }
+  function showMemberPortal(member){
+    document.getElementById("authOverlay").classList.add("hidden");
+    document.getElementById("staffApp").style.display="none";
+    const portal=document.getElementById("memberPortal");
+    portal.classList.add("active");
+    document.getElementById("memberWelcomeName").textContent=member.name;
+    document.getElementById("memberEmail").textContent=member.email;
+    document.getElementById("memberPlan").textContent=member.plan;
+    document.getElementById("memberExpiry").textContent=formatDate(member.expiryDate);
+    const active=isMembershipActive(member);
+    const status=document.getElementById("memberStatus");
+    status.textContent=active ? "ACTIVE" : "EXPIRED";
+    status.style.color=active ? "var(--teal)" : "var(--red)";
+    document.getElementById("memberNfc").textContent=member.cardUID && member.cardUID!=="PASTE-ACTUAL-UID-HERE" ? member.cardUID : "Not assigned yet — register the actual NFC UID.";
+    const rows=(member.checkins||[]).slice().reverse();
+    const table=document.getElementById("memberCheckinTable");
+    document.getElementById("memberCheckinEmpty").style.display=rows.length?"none":"block";
+    table.innerHTML=rows.map(c=>`<tr><td>${c.date}</td><td>${c.time}</td><td>NFC</td><td><span class="pill ok">${c.status}</span></td></tr>`).join("");
+  }
+  function showAuth(){
+    document.getElementById("memberPortal").classList.remove("active");
+    document.getElementById("staffApp").style.display="none";
+    document.getElementById("authOverlay").classList.remove("hidden");
+  }
+  function showStaffApp(){
+    document.getElementById("authOverlay").classList.add("hidden");
+    document.getElementById("memberPortal").classList.remove("active");
+    document.getElementById("staffApp").style.display="grid";
+  }
+
+  document.querySelectorAll("[data-auth-tab]").forEach(btn=>btn.addEventListener("click",()=>{
+    document.querySelectorAll("[data-auth-tab]").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".auth-form").forEach(f=>f.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.authTab+"Form").classList.add("active");
+  }));
+
+  document.getElementById("loginForm").addEventListener("submit",e=>{
+    e.preventDefault();
+    const email=document.getElementById("loginEmail").value.trim().toLowerCase();
+    const password=document.getElementById("loginPassword").value;
+    const member=memberAccounts.find(m=>m.email.toLowerCase()===email && m.password===password);
+    const error=document.getElementById("loginError");
+    if(!member){ error.textContent="Invalid email or password."; return; }
+    error.textContent="";
+    localStorage.setItem(SESSION_KEY,member.email);
+    showMemberPortal(member);
+  });
+
+  document.getElementById("registerForm").addEventListener("submit",e=>{
+    e.preventDefault();
+    const name=document.getElementById("regName").value.trim();
+    const email=document.getElementById("regEmail").value.trim().toLowerCase();
+    const password=document.getElementById("regPassword").value;
+    const planId=document.getElementById("regPlan").value;
+    const cardUID=document.getElementById("regNfc").value.trim().toUpperCase();
+    const error=document.getElementById("registerError");
+    if(memberAccounts.some(m=>m.email.toLowerCase()===email)){ error.textContent="That email is already registered."; return; }
+    const start=new Date();
+    const member={id:"M"+Date.now(),name,email,password,cardUID:cardUID||"PENDING-NFC",planId,plan:planInfo(planId).name,status:"active",startDate:start.toISOString().slice(0,10),expiryDate:calculateExpiry(planId,start),checkins:[]};
+    memberAccounts.push(member); saveMembers();
+    localStorage.setItem(SESSION_KEY,email);
+    error.textContent="";
+    e.target.reset();
+    showMemberPortal(member);
+    toast("Membership created — "+member.plan+".");
+  });
+
+  document.getElementById("memberLogout").addEventListener("click",()=>{
+    localStorage.removeItem(SESSION_KEY);
+    showAuth();
+    document.getElementById("loginForm").reset();
+    toast("Logged out.");
+  });
+
+  /* ---------------- NFC check-in ---------------- */
+  function renderCheckinLog(){
+    const tbody = document.getElementById("checkinLogTable");
+    const empty = document.getElementById("checkinEmpty");
+    if(state.checkins.length === 0){
+      tbody.innerHTML = "";
+      empty.style.display = "block";
+    } else {
+      empty.style.display = "none";
+      tbody.innerHTML = state.checkins.map((c,i)=>
+        `<tr class="${i===0 ? 'flash-in' : ''}"><td>${c.name}</td><td class="mono">${c.chip}</td><td>${c.time}</td><td>${c.plan}</td></tr>`
+      ).join("");
+    }
+    animateNumber(document.getElementById("statCheckins"), state.checkins.length, 400);
+    renderDashboardCheckins();
+  }
+
+  function findMember(scannedUID) {
+    const uid = scannedUID.trim().toUpperCase();
+    console.log("Scanned NFC UID:", uid);
+    const member = memberAccounts.find(m => (m.cardUID || "").trim().toUpperCase() === uid);
+    const zone = document.getElementById("nfcZone");
+    const ring = document.querySelector("#nfcZone .nfc-ring");
+    if(!member){
+      toast("NFC card not registered.");
+      return {ok:false, reason:"not_registered"};
+    }
+    if(!isMembershipActive(member)){
+      toast(member.name + " — ACCESS DENIED: membership expired.");
+      updateNFCStatus("Access denied — membership expired");
+      return {ok:false, reason:"expired", member};
+    }
+    zone.classList.add("success"); ring.classList.add("success");
+    const now = new Date();
+    const checkin={name:member.name,chip:member.cardUID,plan:member.plan+" — active",time:now.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}),date:now.toISOString().slice(0,10),status:"Access granted"};
+    state.checkins.unshift(checkin);
+    member.checkins = member.checkins || [];
+    member.checkins.push({date:checkin.date,time:checkin.time,status:"Access granted"});
+    saveMembers();
+    renderCheckinLog(); renderLowStock();
+    toast("✓ ACCESS GRANTED — Welcome " + member.name + "!");
+    updateNFCStatus("✓ Access granted — " + member.name, true);
+    setTimeout(()=>{zone.classList.remove("success");ring.classList.remove("success");},1000);
+    const session=getSessionMember();
+    if(session && session.email===member.email) showMemberPortal(member);
+    return {ok:true,member};
+  }
+/* ---------------- ACR122U NFC CONNECTION ---------------- */
+  const nfcStatus = document.getElementById("nfcStatus");
+  function updateNFCStatus(message, connected=false){
+    if(!nfcStatus) return;
+    nfcStatus.textContent=message;
+    nfcStatus.style.borderColor=connected ? "var(--teal)" : "var(--line)";
+    nfcStatus.style.color=connected ? "var(--teal)" : "var(--paper)";
+  }
+  let nfcSocket=null;
+  try{
+    nfcSocket=new WebSocket("ws://localhost:8765");
+    nfcSocket.onopen=()=>{ console.log("NFC bridge connected."); updateNFCStatus("NFC scanner connected",true); };
+    nfcSocket.onmessage=(event)=>{
+      const scannedUID=event.data.trim();
+      if(scannedUID) findMember(scannedUID);
+    };
+    nfcSocket.onerror=()=>{ console.log("NFC bridge is not running."); updateNFCStatus("NFC bridge not connected"); };
+    nfcSocket.onclose=()=>{ console.log("NFC bridge disconnected."); updateNFCStatus("Waiting for NFC scanner..."); };
+  }catch(error){
+    console.log("NFC bridge unavailable:",error);
+    updateNFCStatus("NFC bridge not connected");
+  }
+
+  /* ---------------- Coaches ---------------- */
+  function renderCoaches(){
+    const grid = document.getElementById("coachGrid");
+    grid.innerHTML = coaches.filter(c=>c.onsite).map(c=>`
+      <div class="card coach-card">
+        <div class="coach-head">
+          <div class="avatar">${c.initials}</div>
+          <div>
+            <div class="coach-name">${c.name}</div>
+            <div class="coach-spec">${c.specialty}</div>
+          </div>
+        </div>
+        <p class="sub" style="margin:0;">${c.style}</p>
+        <div class="tag-row">${c.tags.map(t=>`<span class="tag">${t}</span>`).join("")}</div>
+        <div class="coach-actions">
+          <button class="btn small assign-btn" data-coach="${c.name}">Assign as my coach</button>
+          <button class="btn ghost small book-btn" data-coach="${c.name}">Book session</button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  document.getElementById("coachChoiceToggle").addEventListener("click", (e)=>{
+    const btn = e.target.closest("button");
+    if(!btn) return;
+    document.querySelectorAll("#coachChoiceToggle button").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    const isGym = btn.dataset.choice === "gym";
+    document.getElementById("coachGymPanel").style.display = isGym ? "" : "none";
+    document.getElementById("coachPersonalPanel").style.display = isGym ? "none" : "";
+  });
+
+  document.getElementById("coachGrid").addEventListener("click", (e)=>{
+    const assignBtn = e.target.closest(".assign-btn");
+    const bookBtn = e.target.closest(".book-btn");
+    if(assignBtn){
+      toast(assignBtn.dataset.coach + " is now assigned as your coach.");
+    }
+    if(bookBtn){
+      openApptModal(bookBtn.dataset.coach);
+    }
+  });
+
+  let apptTargetCoach = "";
+  function openApptModal(coachName){
+    apptTargetCoach = coachName;
+    document.getElementById("apptModalTitle").textContent = "Book a session with " + coachName;
+    document.getElementById("apptDatetime").value = "";
+    document.getElementById("apptNote").value = "";
+    document.getElementById("apptModal").classList.add("open");
+  }
+  document.getElementById("apptCancel").addEventListener("click", ()=>{
+    document.getElementById("apptModal").classList.remove("open");
+  });
+  document.getElementById("apptConfirm").addEventListener("click", ()=>{
+    const dt = document.getElementById("apptDatetime").value;
+    if(!dt){ toast("Pick a date and time first."); return; }
+    document.getElementById("apptModal").classList.remove("open");
+    toast("Session with " + apptTargetCoach + " requested for " + new Date(dt).toLocaleString());
+  });
+
+  document.getElementById("btnRequestPersonal").addEventListener("click", ()=>{
+    const name = document.getElementById("pcName").value.trim();
+    const dt = document.getElementById("pcDatetime").value;
+    if(!name || !dt){ toast("Add your coach's name and a visit time."); return; }
+    toast("Appointment requested for " + name + " on " + new Date(dt).toLocaleString() + ". Front desk will confirm floor access.");
+    document.getElementById("pcName").value = "";
+    document.getElementById("pcDatetime").value = "";
+    document.getElementById("pcNote").value = "";
+  });
+
+  /* ---------------- Workout plans ---------------- */
+  document.getElementById("btnGenerate").addEventListener("click", ()=>{
+    const goal = document.getElementById("goalSelect").value;
+    const level = document.getElementById("levelSelect").value;
+    const rows = workoutLibrary[goal][level];
+    const goalLabel = document.getElementById("goalSelect").selectedOptions[0].text;
+    const levelLabel = document.getElementById("levelSelect").selectedOptions[0].text;
+
+    const html = `
+      <div style="margin-top:20px;animation:viewFade .3s ease both;">
+        <h3 style="font-size:14px;margin-bottom:12px;">${goalLabel} — ${levelLabel}</h3>
+        <div class="exercise-row head"><div>Exercise</div><div>Sets</div><div>Reps / Time</div><div>Load</div></div>
+        ${rows.map((r,i)=>`<div class="exercise-row" style="animation-delay:${i*60}ms"><div>${r[0]}</div><div>${r[1]}</div><div>${r[2]}</div><div>${r[3]||"Bodyweight"}</div></div>`).join("")}
+      </div>
+    `;
+    document.getElementById("planOutput").innerHTML = html;
+    toast("Plan generated for " + goalLabel.toLowerCase() + ".");
+  });
+
+  /* ---------------- Supplements ---------------- */
+  function renderSupplementRecs(){
+    const goal = document.getElementById("goalSelect") ? document.getElementById("goalSelect").value : "muscle";
+    const grid = document.getElementById("suppRecommendGrid");
+    const matches = supplements.filter(s=>s.goal===goal);
+    const list = matches.length ? matches : supplements.slice(0,3);
+    grid.innerHTML = list.map(s=>`
+      <div class="card">
+        <div class="coach-name" style="margin-bottom:4px;">${s.name}</div>
+        <div class="coach-spec">${s.category}</div>
+      </div>
+    `).join("");
+  }
+
+  function renderInventory(){
+    const tbody = document.getElementById("inventoryTable");
+    tbody.innerHTML = supplements.map((s,i)=>{
+      const status = s.stock <= s.low ? '<span class="pill bad">Low stock</span>' : '<span class="pill ok">Stocked</span>';
+      return `<tr>
+        <td>${s.name}</td>
+        <td>${s.category}</td>
+        <td class="mono">${s.stock}</td>
+        <td>${status}</td>
+        <td style="text-align:right;white-space:nowrap;">
+          <button class="btn ghost small" data-i="${i}" data-d="-1">−</button>
+          <button class="btn ghost small" data-i="${i}" data-d="1">+</button>
+        </td>
+      </tr>`;
+    }).join("");
+  }
+
+  document.getElementById("inventoryTable").addEventListener("click", (e)=>{
+    const btn = e.target.closest("button[data-i]");
+    if(!btn) return;
+    const i = Number(btn.dataset.i);
+    const d = Number(btn.dataset.d);
+    supplements[i].stock = Math.max(0, supplements[i].stock + d);
+    renderInventory();
+    renderLowStock();
+    const cell = document.querySelector(`#inventoryTable tr:nth-child(${i+1}) td.mono`);
+    if(cell){
+      cell.style.transition = "none";
+      cell.style.transform = "scale(1.25)";
+      cell.style.color = d > 0 ? "var(--teal)" : "var(--red)";
+      requestAnimationFrame(()=>{
+        cell.style.transition = "transform .25s ease, color .4s ease";
+        cell.style.transform = "scale(1)";
+        cell.style.color = "";
+      });
+    }
+  });
+
+  /* ---------------- Payments ---------------- */
+  function renderPlans(){
+    const grid = document.getElementById("planGrid");
+    grid.innerHTML = plans.map(p=>`
+      <div class="card plan-card ${p.id===state.selectedPlan ? 'selected':''}" data-plan="${p.id}">
+        <div class="coach-spec">${p.name}</div>
+        <div class="price">${p.price}<small> ${p.period}</small></div>
+        <ul>${p.perks.map(x=>`<li>${x}</li>`).join("")}</ul>
+        <button class="btn ${p.id===state.selectedPlan ? '' : 'ghost'} small choose-plan-btn" data-plan="${p.id}">${p.id===state.selectedPlan ? 'Selected' : 'Choose plan'}</button>
+      </div>
+    `).join("");
+    enableTilt(grid.querySelectorAll(".plan-card"));
+  }
+  document.getElementById("planGrid").addEventListener("click", (e)=>{
+    const btn = e.target.closest(".choose-plan-btn");
+    if(!btn) return;
+    state.selectedPlan = btn.dataset.plan;
+    renderPlans();
+  });
+
+  document.getElementById("methodGrid").addEventListener("click", (e)=>{
+    const m = e.target.closest(".method");
+    if(!m) return;
+    document.querySelectorAll(".method").forEach(x=>x.classList.remove("active"));
+    m.classList.add("active");
+    state.payMethod = m.dataset.method;
+  });
+
+  document.getElementById("btnPayNow").addEventListener("click", ()=>{
+    const plan = plans.find(p=>p.id===state.selectedPlan);
+    document.getElementById("paySummary").textContent =
+      `Paid ${plan.price} for the ${plan.name} plan via ${state.payMethod}.`;
+    toast("Payment confirmed — " + plan.name + " via " + state.payMethod);
+  });
+
+  /* ---------------- Init ---------------- */
+  renderCoaches();
+  renderInventory();
+  renderSupplementRecs();
+  renderPlans();
+  applyRolePermissions();
+  setView("dashboard");
+  const existingSession=getSessionMember();
+  if(existingSession){ showMemberPortal(existingSession); } else { showAuth(); }
+  enableTilt(document.querySelectorAll("#coachGrid .coach-card"));
+  initScrollReveal();
+  window.addEventListener("resize", ()=>{
+    moveNavIndicator(document.querySelector(".navbtn.active"));
+  });
+  if(document.fonts && document.fonts.ready){
+    document.fonts.ready.then(()=> moveNavIndicator(document.querySelector(".navbtn.active")));
+  }
+
+  // Simulate the dashboard pulling live numbers from the database:
+  // stat cards start as shimmering skeletons, then settle into place.
+  setTimeout(()=>{
+    document.querySelectorAll(".stat .num").forEach(n=>n.classList.remove("skeleton"));
+    renderCheckinLog();
+    renderLowStock();
+    animateNumber(document.getElementById("statMembers"), 128, 900);
+    animateNumber(document.getElementById("statCoaches"), 9, 900);
+  }, reduceMotion ? 0 : 550);
+
+  // Close the main FitSphere application IIFE.
+  })();
+</script>
+</body>

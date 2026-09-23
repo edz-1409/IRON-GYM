@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRON GYM — Train Hard. Stay Iron.</title>
+<meta name="description" content="IRON GYM — your home for strength, conditioning, and community. View programs, coaches, membership plans, and find us on the map.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0F1317;
+    --panel:#171C21;
+    --panel-raised:#1D2329;
+    --line:#2A3038;
+    --paper:#EDEFEA;
+    --paper-dim:#9AA3AC;
+    --amber:#E8A33D;
+    --teal:#4C9A8B;
+    --red:#C4604A;
+    --radius-sm:4px;
+    --radius-md:8px;
+    --spring:cubic-bezier(.32,1.56,.64,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.6;
+  }
+  h1,h2,h3,.display{
+    font-family:'Oswald',sans-serif;
+    text-transform:uppercase;
+    letter-spacing:.02em;
+    font-weight:600;
+    line-height:1.15;
+  }
+  a{color:inherit;text-decoration:none;}
+  img{max-width:100%;display:block;}
+  .container{max-width:1180px;margin:0 auto;padding:0 24px;}
+  ::selection{background:var(--amber);color:var(--ink);}
+
+  /* ---------- Top bar / Nav ---------- */
+  header.site-header{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    background:rgba(15,19,23,.85);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+    transition:box-shadow .25s ease;
+  }
+  header.site-header.scrolled{box-shadow:0 6px 24px rgba(0,0,0,.35);}
+  .nav-wrap{display:flex;align-items:center;justify-content:space-between;height:64px;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-mark{
+    width:36px;height:36px;border-radius:50%;
+    border:2px solid var(--red);overflow:hidden;background:#000;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .brand-mark img{width:100%;height:100%;object-fit:cover;}
+  .brand-name{font-family:'Oswald',sans-serif;font-size:17px;letter-spacing:.02em;}
+  .brand-name span{display:block;font-family:'Inter',sans-serif;font-size:10px;color:var(--paper-dim);letter-spacing:.06em;text-transform:uppercase;font-weight:500;}
+  nav.mainnav{display:flex;gap:4px;}
+  nav.mainnav a{
+    color:var(--paper-dim);font-size:13.5px;font-weight:500;
+    padding:8px 13px;border-radius:var(--radius-sm);
+    transition:color .18s ease, background .18s ease;
+  }
+  nav.mainnav a:hover{color:var(--paper);background:var(--panel-raised);}
+  nav.mainnav a.cta{color:var(--ink);background:var(--amber);font-weight:600;margin-left:8px;}
+  nav.mainnav a.cta:hover{filter:brightness(1.08);color:var(--ink);}
+  .menu-toggle{display:none;background:none;border:1px solid var(--line);color:var(--paper);border-radius:var(--radius-sm);padding:8px 10px;font-size:13px;}
+
+  /* ---------- Hero ---------- */
+  .hero{
+    min-height:92vh;
+    display:flex;align-items:center;
+    position:relative;overflow:hidden;
+    padding:120px 0 80px;
+  }
+  .hero::before{
+    content:"";position:absolute;inset:0;
+    background:
+      radial-gradient(700px 420px at 78% 30%, rgba(232,163,61,.13), transparent 65%),
+      radial-gradient(600px 500px at 12% 80%, rgba(196,96,74,.10), transparent 60%);
+    pointer-events:none;
+  }
+  .hero-grid-lines{
+    position:absolute;inset:0;pointer-events:none;opacity:.35;
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:64px 64px;
+    mask-image:radial-gradient(ellipse at center, black 30%, transparent 75%);
+    -webkit-mask-image:radial-gradient(ellipse at center, black 30%, transparent 75%);
+  }
+  .hero-inner{position:relative;display:grid;grid-template-columns:1.2fr .8fr;gap:48px;align-items:center;}
+  .hero-eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);
+    border:1px solid var(--amber-dim,#4A3A1E);border-radius:20px;padding:6px 14px;margin-bottom:20px;
+    background:rgba(232,163,61,.07);
+  }
+  .hero-eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal);}
+  .hero h1{font-size:clamp(42px,6.2vw,76px);margin-bottom:18px;}
+  .hero h1 em{font-style:normal;color:var(--amber);}
+  .hero p.lead{color:var(--paper-dim);font-size:16px;max-width:480px;margin-bottom:30px;}
+  .hero-actions{display:flex;gap:12px;flex-wrap:wrap;}
+  .btn{
+    background:var(--amber);color:#221605;border:none;
+    padding:12px 22px;border-radius:var(--radius-sm);
+    font-size:14px;font-weight:600;display:inline-block;
+    transition:filter .15s ease, transform .12s var(--spring);
+  }
+  .btn:hover{filter:brightness(1.08);}
+  .btn:active{transform:scale(.96);}
+  .btn.ghost{background:none;border:1px solid var(--line);color:var(--paper);}
+  .btn.ghost:hover{border-color:var(--paper-dim);}
+  .hero-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-md);
+    padding:26px;box-shadow:0 24px 60px rgba(0,0,0,.4);
+    animation:floaty 5s ease-in-out infinite;
+  }
+  @keyframes floaty{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+  .hero-card h3{font-size:14px;color:var(--paper-dim);letter-spacing:.06em;margin-bottom:14px;}
+  .hero-hours{display:flex;flex-direction:column;gap:10px;font-size:14px;}
+  .hero-hours .row{display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--line);}
+  .hero-hours .row:last-child{border-bottom:none;padding-bottom:0;}
+  .hero-hours .day{color:var(--paper-dim);}
+  .hero-hours .hours{font-family:'IBM Plex Mono',monospace;color:var(--amber);font-size:13px;}
+  .open-now{margin-top:16px;font-size:12px;font-weight:600;}
+  .open-now.open{color:var(--teal);}
+  .open-now.closed{color:var(--red);}
+
+  /* ---------- Sections ---------- */
+  section{padding:88px 0;}
+  .section-head{margin-bottom:44px;max-width:640px;}
+  .section-head .kicker{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);display:block;margin-bottom:10px;}
+  .section-head h2{font-size:clamp(28px,3.6vw,40px);margin-bottom:12px;}
+  .section-head p{color:var(--paper-dim);font-size:15px;}
+
+  /* ---------- About ---------- */
+  .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;}
+  .about-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  .stat-box{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-md);padding:22px;}
+  .stat-box .num{font-family:'Oswald',sans-serif;font-size:34px;color:var(--amber);}
+  .stat-box .lbl{font-size:12px;color:var(--paper-dim);margin-top:4px;}
+  .about-text p{color:var(--paper-dim);font-size:15px;margin-bottom:16px;}
+  .about-text p strong{color:var(--paper);font-weight:600;}
+  .feature-list{list-style:none;margin:22px 0 0;display:flex;flex-direction:column;gap:12px;}
+  .feature-list li{display:flex;gap:12px;font-size:14px;color:var(--paper-dim);}
+  .feature-list li .check{color:var(--teal);font-weight:700;flex-shrink:0;}
+
+  /* ---------- Programs ---------- */
+  #programs{background:var(--panel);border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+  .program-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .program-card{
+    background:var(--ink);border:1px solid var(--line);border-radius:var(--radius-md);
+    padding:26px;display:flex;flex-direction:column;gap:12px;
+    transition:transform .18s ease, border-color .18s ease;
+  }
+  .program-card:hover{transform:translateY(-5px);border-color:var(--amber);}
+  .program-icon{width:44px;height:44px;border-radius:var(--radius-sm);background:var(--panel-raised);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;}
+  .program-icon svg{width:22px;height:22px;stroke:var(--amber);fill:none;stroke-width:1.8;}
+  .program-card h3{font-size:16px;}
+  .program-card p{font-size:13.5px;color:var(--paper-dim);flex:1;}
+
+  /* ---------- Membership ---------- */
+  .plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .plan-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-md);
+    padding:28px;display:flex;flex-direction:column;position:relative;
+    transition:transform .18s ease, border-color .18s ease;
+  }
+  .plan-card:hover{transform:translateY(-5px);}
+  .plan-card.featured{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber), 0 20px 50px rgba(0,0,0,.35);}
+  .plan-badge{
+    position:absolute;top:-11px;right:20px;background:var(--amber);color:#221605;
+    font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    padding:4px 12px;border-radius:12px;
+  }
+  .plan-name{font-size:13px;color:var(--paper-dim);letter-spacing:.08em;text-transform:uppercase;}
+  .plan-price{font-family:'Oswald',sans-serif;font-size:38px;margin:8px 0 2px;}
+  .plan-price small{font-family:'Inter',sans-serif;font-size:13px;color:var(--paper-dim);}
+  .plan-card ul{list-style:none;margin:18px 0 24px;display:flex;flex-direction:column;gap:10px;flex:1;}
+  .plan-card li{font-size:13.5px;color:var(--paper-dim);padding-left:18px;position:relative;}
+  .plan-card li::before{content:"—";position:absolute;left:0;color:var(--amber);}
+
+  /* ---------- Trainers ---------- */
+  .trainer-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .trainer-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-md);
+    padding:24px;display:flex;flex-direction:column;gap:12px;align-items:flex-start;
+    transition:transform .18s ease, border-color .18s ease;
+  }
+  .trainer-card:hover{transform:translateY(-4px);border-color:var(--paper-dim);}
+  .avatar{
+    width:52px;height:52px;border-radius:50%;background:var(--panel-raised);
+    border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
+    font-family:'Oswald',sans-serif;font-size:18px;color:var(--amber);
+  }
+  .trainer-card h3{font-size:16px;}
+  .trainer-spec{font-size:12.5px;color:var(--paper-dim);}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;}
+  .tag{font-size:10.5px;background:var(--panel-raised);border:1px solid var(--line);padding:3px 9px;border-radius:12px;color:var(--paper-dim);}
+
+  /* ---------- Contact / Location ---------- */
+  #contact{background:var(--panel);border-top:1px solid var(--line);}
+  .contact-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:28px;align-items:stretch;}
+  .contact-info{display:flex;flex-direction:column;gap:14px;}
+  .contact-block{background:var(--ink);border:1px solid var(--line);border-radius:var(--radius-md);padding:22px;}
+  .contact-block h3{font-size:13px;color:var(--amber);letter-spacing:.06em;margin-bottom:10px;}
+  .contact-block p, .contact-block a.val{font-size:14px;color:var(--paper);}
+  .contact-block p.dim{color:var(--paper-dim);font-size:13px;}
+  .map-frame{
+    border:1px solid var(--line);border-radius:var(--radius-md);overflow:hidden;
+    min-height:380px;background:var(--ink);
+  }
+  .map-frame iframe{width:100%;height:100%;min-height:380px;border:0;display:block;filter:grayscale(35%) contrast(1.05);}
+  .socials{display:flex;gap:10px;margin-top:4px;}
+  .social-btn{
+    display:inline-flex;align-items:center;gap:9px;
+    background:var(--panel-raised);border:1px solid var(--line);color:var(--paper);
+    padding:10px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;
+    transition:border-color .18s ease, transform .15s var(--spring), color .18s ease;
+  }
+  .social-btn:hover{border-color:var(--amber);transform:translateY(-2px);}
+  .social-btn svg{width:17px;height:17px;fill:currentColor;}
+  .social-btn.ig:hover{color:#E1306C;}
+  .social-btn.fb:hover{color:#6d8fe0;}
+
+  /* ---------- Footer ---------- */
+  footer.site-footer{padding:36px 0;border-top:1px solid var(--line);}
+  .footer-inner{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;}
+  .footer-inner p{font-size:12.5px;color:var(--paper-dim);}
+  .footer-links{display:flex;gap:18px;}
+  .footer-links a{font-size:12.5px;color:var(--paper-dim);transition:color .15s ease;}
+  .footer-links a:hover{color:var(--amber);}
+
+  /* ---------- Scroll reveal ---------- */
+  .reveal{opacity:0;transform:translateY(26px);transition:opacity .6s cubic-bezier(.22,1.12,.36,1), transform .6s cubic-bezier(.22,1.12,.36,1);}
+  .reveal.revealed{opacity:1;transform:translateY(0);}
+  @media (prefers-reduced-motion: reduce){
+    .reveal{opacity:1;transform:none;transition:none;}
+    html{scroll-behavior:auto;}
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width:960px){
+    .hero-inner{grid-template-columns:1fr;}
+    .hero-card{max-width:420px;}
+    .about-grid,.contact-grid{grid-template-columns:1fr;}
+    .program-grid,.plan-grid,.trainer-grid{grid-template-columns:repeat(2,1fr);}
+  }
+  @media (max-width:680px){
+    nav.mainnav{
+      display:none;position:absolute;top:64px;left:0;right:0;
+      flex-direction:column;background:var(--panel);
+      border-bottom:1px solid var(--line);padding:12px;gap:2px;
+    }
+    nav.mainnav.open{display:flex;}
+    nav.mainnav a{padding:12px 14px;}
+    .menu-toggle{display:block;}
+    .program-grid,.plan-grid,.trainer-grid,.about-stats{grid-template-columns:1fr;}
+    section{padding:64px 0;}
+  }
+</style>
+<base target="_self">   
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<header class="site-header" id="siteHeader">
+  <div class="container nav-wrap">
+    <a href="#home" class="brand">
+      <div class="brand-mark">
+        <img src="data:image/png;base64,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" alt="IRON GYM logo">
+      </div>
+      <div>
+        <div class="brand-name">IRON GYM<span>Train hard. Stay iron.</span></div>
+      </div>
+    </a>
+    <nav class="mainnav" id="mainnav">
+      <a href="#home">Home</a>
+      <a href="#about">About</a>
+      <a href="#programs">Programs</a>
+      <a href="#membership">Membership</a>
+      <a href="#trainers">Trainers</a>
+      <a href="#contact">Contact</a>
+      <a href="member-login.html" class="cta">Member Login</a>
+    </nav>
+    <button class="menu-toggle" id="menuToggle">Menu ☰</button>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="home">
+  <div class="hero-grid-lines"></div>
+  <div class="container hero-inner">
+    <div>
+      <span class="hero-eyebrow"><span class="dot"></span> Now open · NFC tap entry</span>
+      <h1>Forge your<br>strongest <em>self</em>.</h1>
+      <p class="lead">IRON GYM is a full-service strength and conditioning facility — 24/7 floor access, expert coaching, smart workout plans, and supplement support, all in one place.</p>
+      <div class="hero-actions">
+        <a href="#membership" class="btn">View membership plans</a>
+        <a href="#contact" class="btn ghost">Find the gym</a>
+      </div>
+    </div>
+    <div class="hero-card">
+      <h3>Gym hours</h3>
+      <div class="hero-hours">
+        <div class="row"><span class="day">Monday — Friday</span><span class="hours">05:00 – 23:00</span></div>
+        <div class="row"><span class="day">Saturday</span><span class="hours">06:00 – 22:00</span></div>
+        <div class="row"><span class="day">Sunday</span><span class="hours">08:00 – 20:00</span></div>
+      </div>
+      <div class="open-now" id="openNow">Checking hours…</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ABOUT ============ -->
+<section id="about">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="kicker">About us</span>
+      <h2>More than a gym. A forge.</h2>
+      <p>We built IRON GYM around one idea: give every member the tools, coaching, and environment to train consistently — whether it's your first month or your tenth year.</p>
+    </div>
+    <div class="about-grid">
+      <div class="about-stats reveal">
+        <div class="stat-box"><div class="num" data-count="128">0</div><div class="lbl">Active members</div></div>
+        <div class="stat-box"><div class="num" data-count="9">0</div><div class="lbl">Certified coaches</div></div>
+        <div class="stat-box"><div class="num" data-count="24">0</div><div class="lbl">Hours of access / day</div></div>
+        <div class="stat-box"><div class="num" data-count="8">0</div><div class="lbl">Years serving the community</div></div>
+      </div>
+      <div class="about-text reveal">
+        <p><strong>Train on your terms.</strong> Tap in with your NFC chip, pull up your workout plan on the kiosk, and get to work — no paperwork, no waiting at the desk.</p>
+        <p><strong>Coaching that fits you.</strong> Pick a coach from our in-house roster, or bring your own personal coach for a scheduled session. Every member gets a goal-based plan they can follow on the floor.</p>
+        <ul class="feature-list">
+          <li><span class="check">✓</span> NFC keychain / wristband entry for every member</li>
+          <li><span class="check">✓</span> Goal-based workout plan generator (loss, muscle, endurance, mobility)</li>
+          <li><span class="check">✓</span> In-house supplement shop with live stock at the front desk</li>
+          <li><span class="check">✓</span> Coach booking for members and scheduled personal-coach visits</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PROGRAMS ============ -->
+<section id="programs">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="kicker">Programs</span>
+      <h2>Train with purpose</h2>
+      <p>Every membership includes access to goal-based training blocks built by our coaching team.</p>
+    </div>
+    <div class="program-grid">
+      <div class="program-card reveal">
+        <div class="program-icon"><svg viewBox="0 0 24 24"><path d="M4 12h16M4 12a2 2 0 100-4 2 2 0 000 4zM4 12a2 2 0 110 4 2 2 0 010-4zM20 12a2 2 0 100-4 2 2 0 000 4zM20 12a2 2 0 110 4 2 2 0 010-4z"/></svg></div>
+        <h3>Strength &amp; muscle</h3>
+        <p>Progressive-overload programs built around compound lifts, with loads and rep schemes scaled to your level — from your first machine press to a 100 kg deadlift.</p>
+      </div>
+      <div class="program-card reveal">
+        <div class="program-icon"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></div>
+        <h3>Weight loss &amp; HIIT</h3>
+        <p>Circuit-based fat-loss blocks with short rest intervals, kettlebell work, and jump-rope intervals. Built to burn, designed to stick.</p>
+      </div>
+      <div class="program-card reveal">
+        <div class="program-icon"><svg viewBox="0 0 24 24"><path d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/></svg></div>
+        <h3>Endurance &amp; conditioning</h3>
+        <p>Tempo runs, rowing intervals, sled pushes, and loaded carries. For members training for races — or just training to never gas out.</p>
+      </div>
+      <div class="program-card reveal">
+        <div class="program-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+        <h3>Mobility &amp; recovery</h3>
+        <p>Low-impact sessions for post-injury members and anyone who wants to move better — controlled tempo, stretching blocks, and foam-roll routines.</p>
+      </div>
+      <div class="program-card reveal">
+        <div class="program-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg></div>
+        <h3>1-on-1 coaching</h3>
+        <p>Book any coach on our roster for a personal session — form correction, program design, or a full training block built around your schedule.</p>
+      </div>
+      <div class="program-card reveal">
+        <div class="program-icon"><svg viewBox="0 0 24 24"><path d="M8.5 3h7M9 3v5l-4.5 8a2 2 0 001.8 3h11.4a2 2 0 001.8-3L15 8V3"/></svg></div>
+        <h3>Nutrition &amp; supplements</h3>
+        <p>Goal-matched supplement recommendations at the front desk — protein, creatine, recovery — with staff keeping stock levels honest.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MEMBERSHIP ============ -->
+<section id="membership">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="kicker">Membership</span>
+      <h2>Pick your plan</h2>
+      <p>No hidden fees. Pay via cash, card, GCash, or bank transfer at the front desk or through the member portal.</p>
+    </div>
+    <div class="plan-grid">
+      <div class="plan-card reveal">
+        <div class="plan-name">Monthly</div>
+        <div class="plan-price">₱1,500 <small>/ month</small></div>
+        <ul>
+          <li>Full gym floor access</li>
+          <li>1 free coach consult</li>
+          <li>Locker access</li>
+          <li>NFC tap entry</li>
+        </ul>
+        <a href="index.html" class="btn ghost">Choose plan</a>
+      </div>
+      <div class="plan-card featured reveal">
+        <span class="plan-badge">Most popular</span>
+        <div class="plan-name">Quarterly</div>
+        <div class="plan-price">₱4,000 <small>/ 3 months</small></div>
+        <ul>
+          <li>Everything in Monthly</li>
+          <li>2 free coach sessions</li>
+          <li>10% off supplements</li>
+          <li>Pause for up to 2 weeks</li>
+        </ul>
+        <a href="index.html" class="btn">Choose plan</a>
+      </div>
+      <div class="plan-card reveal">
+        <div class="plan-name">Annual</div>
+        <div class="plan-price">₱14,000 <small>/ year</small></div>
+        <ul>
+          <li>Everything in Quarterly</li>
+          <li>Priority coach booking</li>
+          <li>Free NFC access chip</li>
+          <li>2 guest passes / month</li>
+        </ul>
+        <a href="index.html" class="btn ghost">Choose plan</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TRAINERS ============ -->
+<section id="trainers">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="kicker">Trainers</span>
+      <h2>Meet the coaches</h2>
+      <p>Our in-house roster covers strength, fat loss, mobility, and endurance. Book any of them through the member portal.</p>
+    </div>
+    <div class="trainer-grid">
+      <div class="trainer-card reveal">
+        <div class="avatar">CM</div>
+        <h3>Coach Mara</h3>
+        <div class="trainer-spec">Strength &amp; conditioning · Progressive overload, compound lifts</div>
+        <div class="tags"><span class="tag">Powerlifting</span><span class="tag">Form correction</span></div>
+      </div>
+      <div class="trainer-card reveal">
+        <div class="avatar">CD</div>
+        <h3>Coach Diego</h3>
+        <div class="trainer-spec">HIIT &amp; fat loss · Circuit-based, short rest intervals</div>
+        <div class="tags"><span class="tag">HIIT</span><span class="tag">Nutrition basics</span></div>
+      </div>
+      <div class="trainer-card reveal">
+        <div class="avatar">CL</div>
+        <h3>Coach Liza</h3>
+        <div class="trainer-spec">Mobility &amp; rehab · Low-impact, controlled tempo</div>
+        <div class="tags"><span class="tag">Post-injury</span><span class="tag">Flexibility</span></div>
+      </div>
+      <div class="trainer-card reveal">
+        <div class="avatar">CR</div>
+        <h3>Coach Ramon</h3>
+        <div class="trainer-spec">Endurance &amp; conditioning · Tempo runs, interval blocks</div>
+        <div class="tags"><span class="tag">Running</span><span class="tag">Cardio</span></div>
+      </div>
+      <div class="trainer-card reveal">
+        <div class="avatar">CB</div>
+        <h3>Coach Bea</h3>
+        <div class="trainer-spec">Bodybuilding · Hypertrophy, isolation focus (by appointment)</div>
+        <div class="tags"><span class="tag">Muscle gain</span><span class="tag">Split routines</span></div>
+      </div>
+      <div class="trainer-card reveal">
+        <div class="avatar">CI</div>
+        <h3>Coach Iris</h3>
+        <div class="trainer-spec">Functional training · Movement patterns over machines (by appointment)</div>
+        <div class="tags"><span class="tag">Functional</span><span class="tag">Core</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTACT / LOCATION ============ -->
+<section id="contact">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="kicker">Contact &amp; location</span>
+      <h2>Come find us</h2>
+      <p>Drop by for a tour, or message us on social media — we reply fast.</p>
+    </div>
+    <div class="contact-grid">
+      <div class="contact-info">
+        <div class="contact-block reveal">
+          <h3>Address</h3>
+          <p>2nd Floor, Iron Building, 123 Main Street,<br>Barangay Poblacion, City</p>
+          <p class="dim">Landmark: beside the city sports complex, across from the public market.</p>
+        </div>
+        <div class="contact-block reveal">
+          <h3>Get in touch</h3>
+          <p><a class="val" href="tel:+639171234567">+63 917 123 4567</a></p>
+          <p><a class="val" href="mailto:hello@irongym.ph">hello@irongym.ph</a></p>
+        </div>
+        <div class="contact-block reveal">
+          <h3>Follow us</h3>
+          <div class="socials">
+            <!-- Instagram — replace the href with your real profile URL -->
+            <a class="social-btn ig" href="https://instagram.com/irongym" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24"><path d="M12 2.2c3.2 0 3.6 0 4.9.07 3.25.15 4.77 1.7 4.92 4.92.06 1.27.07 1.65.07 4.9s-.01 3.63-.07 4.9c-.15 3.23-1.66 4.77-4.92 4.92-1.3.06-1.65.07-4.9.07s-3.6-.01-4.9-.07c-3.26-.15-4.77-1.7-4.92-4.92C2.2 15.6 2.2 15.25 2.2 12s0-3.6.08-4.9C2.42 3.87 3.94 2.34 7.15 2.2 8.45 2.14 8.8 2.13 12 2.13zm0 3.63a6.16 6.16 0 100 12.32 6.16 6.16 0 000-12.32zM12 16a4 4 0 110-8 4 4 0 010 8zm6.4-11.85a1.44 1.44 0 100 2.88 1.44 1.44 0 000-2.88z"/></svg>
+              Instagram
+            </a>
+            <!-- Facebook — replace the href with your real page URL -->
+            <a class="social-btn fb" href="https://facebook.com/irongym" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.09 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.7 4.53-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.09 24 18.1 24 12.07z"/></svg>
+              Facebook
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="map-frame reveal">
+        <!-- Google Maps embed — search your gym on Google Maps → Share → Embed a map, and paste the iframe src here -->
+        <iframe
+          src="https://www.google.com/maps?q=Manila+Philippines&output=embed"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          title="IRON GYM location map"
+          allowfullscreen></iframe>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <p>© 2026 IRON GYM. All rights reserved.</p>
+    <div class="footer-links">
+      <a href="https://instagram.com/irongym" target="_blank" rel="noopener">Instagram</a>
+      <a href="https://facebook.com/irongym" target="_blank" rel="noopener">Facebook</a>
+      <a href="#home">Back to top ↑</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- Mobile menu ---------- */
+  const toggle = document.getElementById("menuToggle");
+  const nav = document.getElementById("mainnav");
+  if(toggle && nav){
+    toggle.addEventListener("click", ()=> nav.classList.toggle("open"));
+    nav.querySelectorAll("a").forEach(a => a.addEventListener("click", ()=> nav.classList.remove("open")));
+  }
+
+  /* ---------- Header shadow on scroll ---------- */
+  const header = document.getElementById("siteHeader");
+  window.addEventListener("scroll", ()=>{
+    header.classList.toggle("scrolled", window.scrollY > 10);
+  }, { passive:true });
+
+  /* ---------- Open/closed status (matches posted hours) ---------- */
+  function gymOpen(){
+    const now = new Date();
+    const day = now.getDay(); // 0 = Sunday
+    const mins = now.getHours() * 60 + now.getMinutes();
+    let open, close;
+    if(day === 0){ open = 8*60; close = 20*60; }
+    else if(day === 6){ open = 6*60; close = 22*60; }
+    else { open = 5*60; close = 23*60; }
+    return mins >= open && mins < close;
+  }
+  const statusEl = document.getElementById("openNow");
+  if(statusEl){
+    const open = gymOpen();
+    statusEl.textContent = open ? "● Open now — come train" : "● Closed right now — see hours below";
+    statusEl.classList.add(open ? "open" : "closed");
+  }
+
+  /* ---------- Count-up stats ---------- */
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function countUp(el, target){
+    if(reduceMotion){ el.textContent = target; return; }
+    const duration = 1100;
+    const startTime = performance.now();
+    function step(now){
+      const p = Math.min(1, (now - startTime) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(target * eased);
+      if(p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* ---------- Scroll reveal + stat triggers ---------- */
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(!entry.isIntersecting) return;
+      entry.target.classList.add("revealed");
+      entry.target.querySelectorAll("[data-count]").forEach(n => countUp(n, Number(n.dataset.count)));
+      io.unobserve(entry.target);
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll(".reveal").forEach(el=>{
+    if(reduceMotion){ el.classList.add("revealed"); el.querySelectorAll("[data-count]").forEach(n => n.textContent = n.dataset.count); }
+    else io.observe(el);
+  });
+})();
+</script>
+</body>
+</html>
